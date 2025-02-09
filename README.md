@@ -6,13 +6,9 @@
 <p>Ubuntu 20.04</p>
 <p>Debian 11</p>
 
-<code>apt update && apt upgrade -y && apt install sudo git -y && sudo rm -rf WhaticketWorkflow && sudo git clone https://github.com/andrew890074/WhaticketWorkflow.git && cd WhaticketWorkflow && sudo chmod +x ./automatizaai && ./automatizaai</code><br />
+<code>apt update && apt upgrade -y && apt install sudo git -y && sudo rm -rf Whaticket-Saas && sudo git clone https://github.com/CauanVilcson/Whaticket-Saas.git && cd Whaticket-Saas && sudo chmod +x ./automatizaai && ./automatizaai</code><br />
 &nbsp;</p>
 
-<h3>Whatsapp Suporte: +55 (51) 9957-9150<h3>
-
-<h3>Grupo de Suporte: https://encurtador.com.br/Q9Yl5<h3>
-<br/>
 
 ## Principais Funcionalidades
 
@@ -52,21 +48,3 @@
 - Criar Agendamento ✅
 - Listar Agendamento ✅
 - Excluir Agendamento ✅
-
-
-<h1>Demonstração</h1>
-
-![link About do site](https://github.com/andrew890074/WhaticketWorkflow/blob/main/demonstração/facebook.jpeg)
-
-![link About do site](https://github.com/andrew890074/WhaticketWorkflow/blob/main/demonstração/flow2.jpeg)
-
-
-![link About do site](https://github.com/andrew890074/WhaticketWorkflow/blob/main/demonstração/flow.jpeg)
-
-![GIF](demonstração/transcrição.gif)
-
-![GIF](demonstração/video1.gif)
-
-![GIF](demonstração/api.gif)
-
-![GIF](demonstração/video2.gif)
