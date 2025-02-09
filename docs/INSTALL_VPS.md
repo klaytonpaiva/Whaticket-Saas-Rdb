@@ -109,7 +109,7 @@ sudo apt update && sudo apt upgrade
 18. Realizar o download do node 16.x
 
 ```bash
-curl -fsSL https://deb.nodesource.com/setup_16.x | sudo -E bash -
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 ```
 
 19. Instalar o node
