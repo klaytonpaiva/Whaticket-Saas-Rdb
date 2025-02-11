@@ -118,6 +118,12 @@ export default function Options(props) {
   const [loadingCheckMsgIsGroup, setCheckMsgIsGroup] = useState(false);
 
 
+  const [viewclosed, setviewclosed] = useState('disabled');
+  const [loadingviewclosed, setLoadingviewclosed] = useState(false);
+
+  const [viewgroups, setviewgroups] = useState('disabled');
+  const [loadingviewgroups, setLoadingviewgroups] = useState(false);    
+
   const [ipixcType, setIpIxcType] = useState("");
   const [loadingIpIxcType, setLoadingIpIxcType] = useState(false);
   const [tokenixcType, setTokenIxcType] = useState("");
@@ -176,6 +182,16 @@ export default function Options(props) {
       const allowregister = settings.find((s) => s.key === 'allowregister');
       if (allowregister) {
         setallowregister(allowregister.value);
+      }
+
+      const viewclosed = settings.find((s) => s.key === 'viewclosed');
+      if (viewclosed) {
+        setviewclosed(viewclosed.value);
+      }
+
+      const viewgroups = settings.find((s) => s.key === 'viewgroups');
+      if (viewgroups) {
+        setviewgroups(viewgroups.value);
       }
       
 	  {/*PLW DESIGN SAUDAÇÃO*/}
@@ -267,7 +283,29 @@ export default function Options(props) {
     toast.success('Operação atualizada com sucesso.');
     setLoadingallowregister(false);
   }
+ 
   
+  async function handleviewclosed(value) {
+    setviewclosed(value);
+    setLoadingviewclosed(true);
+    await update({
+      key: 'viewclosed',
+      value,
+    });
+    toast.success('Operação atualizada com sucesso.');
+    setLoadingviewclosed(false);
+  }
+
+  async function handleviewgroups(value) {
+    setviewgroups(value);
+    setLoadingviewgroups(true);
+    await update({
+      key: 'viewgroups',
+      value,
+    });
+    toast.success('Operação atualizada com sucesso.');
+    setLoadingviewgroups(false);
+  }
     async function handleSendGreetingMessageOneQueues(value) {
     setSendGreetingMessageOneQueues(value);
     setLoadingSendGreetingMessageOneQueues(true);
@@ -409,6 +447,7 @@ export default function Options(props) {
     toast.success("Operação atualizada com sucesso.");
     setLoadingTokenIxcType(false);
   }
+
 
   async function handleChangeIpMkauth(value) {
     setIpMkauthType(value);
@@ -616,7 +655,47 @@ export default function Options(props) {
             </FormHelperText>
           </FormControl>
         </Grid>
-	
+        <Grid xs={12} sm={12} md={12} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id='viewclosed-label'>
+              Operador Visualiza Tickets Fechados?
+            </InputLabel>
+            <Select
+              labelId='viewclosed-label'
+              value={viewclosed}
+              onChange={async (e) => {
+                handleviewclosed(e.target.value);
+              }}
+            >
+              <MenuItem value={'disabled'}>Não</MenuItem>
+              <MenuItem value={'enabled'}>Sim</MenuItem>
+            </Select>
+            <FormHelperText>
+              {loadingviewclosed && 'Atualizando...'}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
+
+        <Grid xs={12} sm={12} md={12} item>
+          <FormControl className={classes.selectContainer}>
+            <InputLabel id='viewgroups-label'>
+              Operador Visualiza Grupos?
+            </InputLabel>
+            <Select
+              labelId='viewgroups-label'
+              value={viewgroups}
+              onChange={async (e) => {
+                handleviewgroups(e.target.value);
+              }}
+            >
+              <MenuItem value={'disabled'}>Não</MenuItem>
+              <MenuItem value={'enabled'}>Sim</MenuItem>
+            </Select>
+            <FormHelperText>
+              {loadingviewgroups && 'Atualizando...'}
+            </FormHelperText>
+          </FormControl>
+        </Grid>
 		
       </Grid>
 	  

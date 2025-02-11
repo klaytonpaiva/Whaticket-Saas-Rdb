@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import { useHistory } from "react-router-dom";
 import { Tooltip } from "@material-ui/core";
 import { makeStyles } from "@material-ui/core/styles";
+import Checkbox from '@material-ui/core/Checkbox';
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -35,8 +36,18 @@ import { AuthContext } from "../../context/Auth/AuthContext";
 import { Can } from "../../components/Can";
 import NewTicketModal from "../../components/NewTicketModal";
 import { SocketContext } from "../../context/Socket/SocketContext";
-
+import { generateColor } from "../../helpers/colorGenerator";
+import { getInitials } from "../../helpers/getInitials";
 import {CSVLink} from "react-csv";
+
+import PopupState, { bindTrigger, bindMenu } from "material-ui-popup-state";
+import {
+    ArrowDropDown,
+    Backup,
+    CloudDownload,
+    ContactPhone,
+} from "@material-ui/icons";
+import { Menu, MenuItem } from "@material-ui/core";
 
 const reducer = (state, action) => {
   if (action.type === "LOAD_CONTACTS") {
@@ -108,7 +119,33 @@ const Contacts = () => {
   const [deletingContact, setDeletingContact] = useState(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [selectAll, setSelectAll] = useState(false); // Estado para controlar se todos os checkboxes estão marcados
+  const [selectedContacts, setSelectedContacts] = useState([]);
   const fileUploadRef = useRef(null);
+
+  
+  useEffect(() => {
+    if (selectAll) {
+        setSelectedContacts(contacts.map((contact) => contact.id));
+    } else {
+        setSelectedContacts([]);
+    }
+}, [contacts, selectAll]);
+
+const handleSelectAll = () => {
+    setSelectAll(!selectAll); // Alterna o estado de selectAll
+};
+
+
+const handleCheckboxChange = (contactId) => {
+  setSelectedContacts((prevSelected) => {
+      if (prevSelected.includes(contactId)) {
+          return prevSelected.filter((id) => id !== contactId);
+      } else {
+          return [...prevSelected, contactId];
+      }
+  });
+};
 
   const socketManager = useContext(SocketContext);
 
@@ -209,6 +246,24 @@ const Contacts = () => {
     setSearchParam("");
     setPageNumber(1);
   };
+
+  
+  const handleDeleteSelectedContacts = async () => {
+    try {
+        for (const contactId of selectedContacts) {
+            await api.delete(`/contacts/${contactId}`);
+        }
+        toast.success(i18n.t("contacts.toasts.deleted"));
+        setSelectedContacts([]);
+        setSelectAll(false);
+
+        setSearchParam("");
+        setPageNumber(1);
+    } catch (err) {
+        toastError(err);
+    }
+};
+
   
   const handleimportContact = async () => {
     try {
@@ -313,22 +368,91 @@ function getDateLastMessage(contact) {
             }}
           />
           <Button
-            variant="contained"
-            color="primary"
-            onClick={(e) => setConfirmOpen(true)}
-          >
-            {i18n.t("contacts.buttons.import")}
-          </Button>
-          <Button
           variant="contained"
           color="primary"
-          onClick={() => {
-            fileUploadRef.current.value = null;
-            fileUploadRef.current.click();
-          }}
+          onClick={handleSelectAll}
       >
-        {i18n.t("contacts.buttons.importSheet")}
-      </Button>
+          {selectAll ? "Desmarcar Todos" : "Marcar Todos"}
+        </Button>
+
+      <Can
+      role={user.profile}
+      perform="contacts-page:deleteContact"
+      yes={() => (
+          <Button
+              variant="contained"
+              color="primary"
+              onClick={handleDeleteSelectedContacts}
+          >
+              {selectAll ? "Excluir Todos" : "Excluir"}
+          </Button>
+      )}
+      />	
+
+         <PopupState variant="popover" popupId="demo-popup-menu">
+             {(popupState) => (
+             <React.Fragment>
+                                <Button
+                                    variant="contained"
+                                    color="primary"
+                                    {...bindTrigger(popupState)}
+                                >
+                                    Importar / Exportar
+                                    <ArrowDropDown />
+                                </Button>
+								<Menu {...bindMenu(popupState)}>
+									<MenuItem
+										onClick={() => {
+											setConfirmOpen(true);
+											popupState.close();
+										}}
+									>
+									<ContactPhone
+                                            fontSize="small"
+                                            color="primary"
+                                            style={{
+                                                marginRight: 10,
+                                            }}
+                                        />
+										{i18n.t("contacts.buttons.import")}
+									</MenuItem>
+									<MenuItem
+										onClick={() => {
+											fileUploadRef.current.value = null; // Limpa o valor do input
+											fileUploadRef.current.click(); // Dispara o clique no input de upload
+											popupState.close(); // Fecha o menu
+										}}
+									>
+											<Backup
+                                            fontSize="small"
+                                            color="primary"
+                                            style={{
+                                                marginRight: 10,
+                                            }}
+                                        />
+										{i18n.t("contacts.buttons.importSheet")}
+									</MenuItem>
+                                    <MenuItem>
+                        
+									<CSVLink style={{ textDecoration:'none' }} separator=";" filename={'whaticket.csv'} 
+									data={contacts.map((contact) => ({ name: contact.name, number: contact.number, email: contact.email }))}>
+                                        
+                                        <CloudDownload fontSize="small"
+                                            color="primary"
+                                            style={{
+                                                marginRight: 10,
+                                            
+                                                }}                                                
+                                        />        
+                                        Exportar Excel                                
+                                   </CSVLink>
+                                        
+                                    </MenuItem>
+                                </Menu>
+                            </React.Fragment>
+                        )}
+                    </PopupState>
+					
           <Button
             variant="contained"
             color="primary"
@@ -336,12 +460,6 @@ function getDateLastMessage(contact) {
           >
             {i18n.t("contacts.buttons.add")}
           </Button>
-
-         <CSVLink style={{ textDecoration:'none'}} separator=";" filename={'whaticket.csv'} data={contacts.map((contact) => ({ name: contact.name, number: contact.number, email: contact.email }))}>
-          <Button	variant="contained" color="primary"> 
-          EXPORTAR CONTATOS 
-          </Button>
-          </CSVLink>		  
 
         </MainHeaderButtonsWrapper>
       </MainHeader>
@@ -366,7 +484,10 @@ function getDateLastMessage(contact) {
         <Table size="small">
           <TableHead>
             <TableRow>
-              <TableCell padding="checkbox" />
+            <TableCell padding="checkbox" align="center"/>
+            <TableCell >
+                {i18n.t("Foto de Perfil")}
+            </TableCell>
               <TableCell>{i18n.t("contacts.table.name")}</TableCell>
               <TableCell align="center">
                 {i18n.t("contacts.table.whatsapp")}
@@ -385,11 +506,17 @@ function getDateLastMessage(contact) {
           </TableHead>
           <TableBody>
             <>
-              {contacts.map((contact) => (
-                <TableRow key={contact.id}>
-                  <TableCell style={{ paddingRight: 0 }}>
-                    {<Avatar src={contact.profilePicUrl} />}
-                  </TableCell>
+                            {contacts.map((contact) => (
+                                <TableRow key={contact.id}>
+                                    <TableCell padding="checkbox">
+                                        <Checkbox
+                                            checked={selectedContacts.includes(contact.id)}
+                                            onChange={() => handleCheckboxChange(contact.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell style={{ paddingLeft: 40 }}>
+                                        {<Avatar src={contact.profilePicUrl} />}
+                                    </TableCell>
                   <TableCell>{contact.name}</TableCell>
                   <TableCell align="center">{contact.number}</TableCell>
                   <TableCell align="center">{contact.email}</TableCell>

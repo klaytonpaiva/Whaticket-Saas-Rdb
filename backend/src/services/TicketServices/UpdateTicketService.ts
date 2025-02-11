@@ -29,6 +29,7 @@ interface TicketData {
   useIntegration?: boolean;
   integrationId?: number | null;
   promptId?: number | null;
+  lastMessage?: string;
 }
 
 interface Request {
@@ -50,8 +51,8 @@ const UpdateTicketService = async ({
 }: Request): Promise<Response> => {
 
   try {
-    const { status } = ticketData;
-    let { queueId, userId, whatsappId } = ticketData;
+    let { status } = ticketData;
+    let { queueId, userId, whatsappId, lastMessage = null } = ticketData;
     let chatbot: boolean | null = ticketData.chatbot || false;
     let queueOptionId: number | null = ticketData.queueOptionId || null;
     let promptId: number | null = ticketData.promptId || null;
@@ -90,25 +91,6 @@ const UpdateTicketService = async ({
     const oldQueueId = ticket.queueId;
 
     if (oldStatus === "closed" || Number(whatsappId) !== ticket.whatsappId) {
-      // let otherTicket = await Ticket.findOne({
-      //   where: {
-      //     contactId: ticket.contactId,
-      //     status: { [Op.or]: ["open", "pending", "group"] },
-      //     whatsappId
-      //   }
-      // });
-      // if (otherTicket) {
-      //     otherTicket = await ShowTicketService(otherTicket.id, companyId)
-
-      //     await ticket.update({status: "closed"})
-
-      //     io.to(oldStatus).emit(`company-${companyId}-ticket`, {
-      //       action: "delete",
-      //       ticketId: ticket.id
-      //     });
-
-      //     return { ticket: otherTicket, oldStatus, oldUserId }
-      // }
       await CheckContactOpenTickets(ticket.contact.id, whatsappId);
       chatbot = null;
       queueOptionId = null;
@@ -120,18 +102,24 @@ const UpdateTicketService = async ({
         companyId
       );
 
-      if (setting?.value === "enabled") {
+      if (
+        !ticket.contact.isGroup &&
+        !ticket.contact.disableBot &&
+        setting?.value === "enabled"
+      ) {
         if (ticketTraking.ratingAt == null) {
-          const ratingTxt = ratingMessage || "";
+          const ratingTxt = ratingMessage?.trim() || "";
           let bodyRatingMessage = `\u200e${ratingTxt}\n\n`;
           bodyRatingMessage +=
             "Digite de 1 à 3 para qualificar nosso atendimento:\n*1* - _Insatisfeito_\n*2* - _Satisfeito_\n*3* - _Muito Satisfeito_\n\n";
           await SendWhatsAppMessage({ body: bodyRatingMessage, ticket });
-
+    
+          // Atualiza o rastreamento para indicar que a avaliação foi solicitada
           await ticketTraking.update({
-            ratingAt: moment().toDate()
+            ratingAt: moment().toDate(),
           });
-
+    
+          // Remove o ticket da lista de abertos
           io.to(`company-${ticket.companyId}-open`)
             .to(`queue-${ticket.queueId}-open`)
             .to(ticketId.toString())
@@ -139,14 +127,20 @@ const UpdateTicketService = async ({
               action: "delete",
               ticketId: ticket.id
             });
-
+    
           return { ticket, oldStatus, oldUserId };
         }
+    
         ticketTraking.ratingAt = moment().toDate();
         ticketTraking.rated = false;
       }
 
-      if (!isNil(complationMessage) && complationMessage !== "") {
+      if (
+        !ticket.contact.isGroup &&
+        !ticket.contact.disableBot &&
+        !isNil(complationMessage) &&
+        complationMessage !== ""
+      )  {
         const body = `\u200e${complationMessage}`;
         await SendWhatsAppMessage({ body, ticket });
       }
@@ -162,8 +156,8 @@ const UpdateTicketService = async ({
       ticketTraking.whatsappId = ticket.whatsappId;
       ticketTraking.userId = ticket.userId;
 
-      /*    queueId = null;
-            userId = null; */
+      queueId = null;
+      userId = null;
     }
 
     if (queueId !== undefined && queueId !== null) {
@@ -241,7 +235,8 @@ const UpdateTicketService = async ({
       userId,
       whatsappId,
       chatbot,
-      queueOptionId
+      queueOptionId,
+      lastMessage: lastMessage !== null ? lastMessage : ticket.lastMessage
     });
 
     await ticket.reload();
@@ -251,7 +246,7 @@ const UpdateTicketService = async ({
         whatsappId,
         queuedAt: moment().toDate(),
         startedAt: null,
-        userId: null
+        userId: null,
       });
     }
 
@@ -261,6 +256,7 @@ const UpdateTicketService = async ({
         ratingAt: null,
         rated: false,
         whatsappId,
+        lastMessage: lastMessage !== null ? lastMessage : ticket.lastMessage,
         userId: ticket.userId
       });
     }
