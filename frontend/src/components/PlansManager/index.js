@@ -245,7 +245,7 @@ export function PlanManagerForm(props) {
                         {/* KANBAN */}
                         <Grid xs={12} sm={8} md={2} item>
                             <FormControl margin="dense" variant="outlined" fullWidth>
-                                <InputLabel htmlFor="useKanban-selection">Kanban</InputLabel>
+                                <InputLabel htmlFor="useKanban-selection">Fluxo</InputLabel>
                                 <Field
                                     as={Select}
                                     id="useKanban-selection"

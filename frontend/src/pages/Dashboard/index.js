@@ -599,7 +599,7 @@ const Dashboard = () => {
           </Grid>
 
           {/* ATENDENTES ATIVOS */}
-			  {/*<Grid item xs={12} sm={6} md={4}>
+			  <Grid item xs={12} sm={6} md={4}>
             <Paper
               className={classes.card6}
               style={{ overflow: "hidden" }}
@@ -638,7 +638,7 @@ const Dashboard = () => {
                 </Grid>
               </Grid>
             </Paper>
-</Grid>*/}
+</Grid>
 
           {/* FINALIZADOS */}
           <Grid item xs={12} sm={6} md={4}>
